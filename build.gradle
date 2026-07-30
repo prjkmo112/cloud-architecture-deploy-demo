@@ -33,6 +33,9 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Source: https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-aws-starter-parameter-store
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-parameter-store:4.1.0'
 }
 
 tasks.named('test') {
