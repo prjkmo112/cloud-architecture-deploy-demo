@@ -1,3 +1,7 @@
 spring:
   application:
     name: cloud-architecture-deploy-demo
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
