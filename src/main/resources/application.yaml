@@ -5,3 +5,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: sparta-deploy-demo
+    version: 1.0.0
