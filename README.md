@@ -161,3 +161,23 @@ java -jar app.jar --spring.profiles.active=prod
 
 <img width="40%" class="blog-image" src="docs/images/img_13.png" />
 
+### 7. 프로필 사진 기능 추가와 권한 관리
+
+#### 7-1. S3 Bucket 생성 및 설정
+
+ParameterStore 읽을 수 있는 정책과 S3 접근 정책을 포함한 role 을 생성하여 이를 EC2 의 IAM 역할로 붙입니다.
+
+![img_14.png](docs/images/img_14.png)
+
+#### 7-2. API 에 이미지 업로드 (S3) 기능 구현
+
+![img_15.png](docs/images/img_15.png)
+
+![img_16.png](docs/images/img_16.png)
+
+> 예시 Presigned URL
+> 
+> https://sdd-momo-s3.s3.ap-northeast-2.amazonaws.com/uploads/f179d082-3606-4506-8879-840b29339795_20240209_121854.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260731T152707Z&X-Amz-SignedHeaders=host&X-Amz-Credential=AKIA37TRHJA5PAL7SPDP%2F20260731%2Fap-northeast-2%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=2ff2a5fd5a5e18fe5ea4dd6c9c8c594f163d0d7025302efc12cb3a19fdee7be9
+> 
+> ![](https://sdd-momo-s3.s3.ap-northeast-2.amazonaws.com/uploads/f179d082-3606-4506-8879-840b29339795_20240209_121854.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260731T152707Z&X-Amz-SignedHeaders=host&X-Amz-Credential=AKIA37TRHJA5PAL7SPDP%2F20260731%2Fap-northeast-2%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=2ff2a5fd5a5e18fe5ea4dd6c9c8c594f163d0d7025302efc12cb3a19fdee7be9)
+
