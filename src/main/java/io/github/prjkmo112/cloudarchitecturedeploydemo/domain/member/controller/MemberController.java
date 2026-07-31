@@ -32,7 +32,7 @@ public class MemberController {
             @Valid @RequestBody CreateMemberRequestDto createMemberRequestDto
     ) {
         MemberDto dto = memberService.createMember(createMemberRequestDto);
-        return ApiResponse.ok("정상 저장되었습니다.", dto);
+        return ApiResponse.created("정상 저장되었습니다.", dto);
     }
 
 }
