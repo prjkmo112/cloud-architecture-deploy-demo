@@ -15,3 +15,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
+info:
+  app:
+    team-name: ${TEAM_NAME}
