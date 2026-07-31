@@ -1,12 +1,3 @@
-<style>
-.blog-image {
-  margin: 0 auto;
-  border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-}
-</style>
-
 # Cloud Architecture Deploy Demo
 
 AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 프로젝트
@@ -30,7 +21,7 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 
 실수로 비용이 과다하게 발생하는 것을 방지하기 위해 AWS Budget 설정을 하였습니다.
 
-<img width="70%" class="blog-image" src="docs/images/img.png" />
+<img src="docs/images/img.png" />
 
 ### 2. 네트워크 구축 및 핵심 기능 배포
 
@@ -38,11 +29,11 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 
 - VPC 생성
 
-<img width="70%" class="blog-image" src="docs/images/img_1.png" />
+<img src="docs/images/img_1.png" />
 
 - Public 서브넷에 EC2 생성
 
-<img width="70%" class="blog-image" src="docs/images/img_2.png" />
+<img src="docs/images/img_2.png" />
 
 ### 3. API 프로젝트 개발
 
@@ -113,7 +104,7 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 
 Public Subnet 두 개를 묶어 Subnet Group 을 만들어줍니다.
 
-<img width="70%" class="blog-image" src="docs/images/img_3.png" />
+<img src="docs/images/img_3.png" />
 
 > ⚠️ **RDS 는 반드시 Private Subnet** 에 넣어야 합니다.
 >
@@ -128,18 +119,18 @@ RDS 는 아래 정보에 맞게 만들었습니다.
 
 RDS 를 생성하고 나서 확인해보면 EC2 리소스에 정상적으로 연결된 것을 확인할 수 있습니다.
 
-<img width="85%" class="blog-image" src="docs/images/img_5.png" />
+<img src="docs/images/img_5.png" />
 
 #### 4-2. Parameter Store 정보 저장
 
 RDS 접속 정보를 Parameter Store 에 저장합니다.
 
-<img width="85%" class="blog-image" src="docs/images/img_6.png" />
+<img src="docs/images/img_6.png" />
 
 EC2 에서 Parameter Store 에 접근할 수 있는 권한을 주어야 사용할 수 있습니다.
 `AmazonSSMReadOnlyAccess` 정책으로 역할을 하나 만든 뒤에 EC2 에 IAM 역할로 연결해줍니다. 
 
-<img width="85%" class="blog-image" src="docs/images/img_7.png" />
+<img src="docs/images/img_7.png" />
 
 ### 5. 수동 배포
 
@@ -149,7 +140,7 @@ EC2 에서 Parameter Store 에 접근할 수 있는 권한을 주어야 사용�
 ./gradlew clean bootJar
 ```
 
-<img width="85%" class="blog-image" src="docs/images/img_8.png" />
+<img src="docs/images/img_8.png" />
 
 빌드된 jar 파일을 ec2 로 옮기고 spring boot 를 실행합니다.
 
@@ -161,15 +152,12 @@ java -jar app.jar --spring.profiles.active=prod
 
 아래는 EC2 에 직접 배포한 후 API 실행한 결과입니다.
 
-<img width="45%" class="blog-image" src="docs/images/img_9.png" />
-&nbsp;&nbsp;&nbsp;&nbsp;
-<img width="50%" class="blog-image" src="docs/images/img_10.png" />
 
-<img width="45%" class="blog-image" src="docs/images/img_11.png" />
-&nbsp;&nbsp;&nbsp;&nbsp;
-<img width="50%" class="blog-image" src="docs/images/img_12.png" />
+<img width="45%" class="blog-image" src="docs/images/img_9.png" />   <img width="50%" class="blog-image" src="docs/images/img_10.png" />
+
+<img width="45%" class="blog-image" src="docs/images/img_11.png" />   <img width="50%" class="blog-image" src="docs/images/img_12.png" />
 
 아래 이미지는 전체 API 에 대한 테스트입니다.
 
-<img width="60%" class="blog-image" src="docs/images/img_13.png" />
+<img width="40%" class="blog-image" src="docs/images/img_13.png" />
 
