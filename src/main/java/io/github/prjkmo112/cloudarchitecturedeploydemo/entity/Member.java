@@ -39,4 +39,7 @@ public class Member extends AuditingBaseEntity {
     @Enumerated(EnumType.STRING)
     private MbtiEnum mbti;
 
+    @Column(name = "IMAGE_URL", nullable = true, length = 255)
+    private String imageUrl;
+
 }
