@@ -6,6 +6,16 @@ spring:
     hibernate:
       ddl-auto: validate
 
+  cloud:
+    aws:
+      s3:
+        bucket: sdd-momo-s3
+        base-url: sdd-momo-s3.s3.ap-northeast-2.amazonaws.com
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
 management:
   endpoints:
     web:
