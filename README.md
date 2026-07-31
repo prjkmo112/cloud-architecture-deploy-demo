@@ -30,7 +30,7 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 
 실수로 비용이 과다하게 발생하는 것을 방지하기 위해 AWS Budget 설정을 하였습니다.
 
-<img width="70%" class="blog-image" src="img.png" />
+<img width="70%" class="blog-image" src="docs/images/img.png" />
 
 ### 2. 네트워크 구축 및 핵심 기능 배포
 
@@ -38,11 +38,11 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 
 - VPC 생성
 
-<img width="70%" class="blog-image" src="img_1.png" />
+<img width="70%" class="blog-image" src="docs/images/img_1.png" />
 
 - Public 서브넷에 EC2 생성
 
-<img width="70%" class="blog-image" src="img_2.png" />
+<img width="70%" class="blog-image" src="docs/images/img_2.png" />
 
 ### 3. API 프로젝트 개발
 
@@ -103,3 +103,73 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 |---------|------------|-----|----------|
 | `local` | `--spring.profiles.active=local` | H2 (파일 기반) | `create` |
 | `prod` | `--spring.profiles.active=prod` | MySQL (AWS RDS) | `validate` |
+
+`prod` 에서는 DB 접속 정보를 환경 변수로 주입받아 코드에 민감 정보가 노출되지 않도록 합니다.
+이때 AWS 의 Parameter Store 서비스를 활용하여 환경 변수를 안전하게 관리합니다.
+
+### 4. 인프라 구축
+
+#### 4-1. RDS 생성
+
+Public Subnet 두 개를 묶어 Subnet Group 을 만들어줍니다.
+
+<img width="70%" class="blog-image" src="docs/images/img_3.png" />
+
+> ⚠️ **RDS 는 반드시 Private Subnet** 에 넣어야 합니다.
+>
+> 다만, 해당 프로젝트는 데모 목적이므로 Public Subnet 에 생성하였습니다.
+
+RDS 는 아래 정보에 맞게 만들었습니다.
+
+- 프리티어에 맞게 인스턴스 1개 (db.t4g.micro)
+- MySQL 8.4.9
+- EC2 리소스 연결
+- 위에서 만든 public subnet 연결
+
+RDS 를 생성하고 나서 확인해보면 EC2 리소스에 정상적으로 연결된 것을 확인할 수 있습니다.
+
+<img width="85%" class="blog-image" src="docs/images/img_5.png" />
+
+#### 4-2. Parameter Store 정보 저장
+
+RDS 접속 정보를 Parameter Store 에 저장합니다.
+
+<img width="85%" class="blog-image" src="docs/images/img_6.png" />
+
+EC2 에서 Parameter Store 에 접근할 수 있는 권한을 주어야 사용할 수 있습니다.
+`AmazonSSMReadOnlyAccess` 정책으로 역할을 하나 만든 뒤에 EC2 에 IAM 역할로 연결해줍니다. 
+
+<img width="85%" class="blog-image" src="docs/images/img_7.png" />
+
+### 5. 수동 배포
+
+#### 5-1. Build
+
+```bash
+./gradlew clean bootJar
+```
+
+<img width="85%" class="blog-image" src="docs/images/img_8.png" />
+
+빌드된 jar 파일을 ec2 로 옮기고 spring boot 를 실행합니다.
+
+```bash
+java -jar app.jar --spring.profiles.active=prod
+```
+
+### 6. API 실행
+
+아래는 EC2 에 직접 배포한 후 API 실행한 결과입니다.
+
+<img width="45%" class="blog-image" src="docs/images/img_9.png" />
+&nbsp;&nbsp;&nbsp;&nbsp;
+<img width="50%" class="blog-image" src="docs/images/img_10.png" />
+
+<img width="45%" class="blog-image" src="docs/images/img_11.png" />
+&nbsp;&nbsp;&nbsp;&nbsp;
+<img width="50%" class="blog-image" src="docs/images/img_12.png" />
+
+아래 이미지는 전체 API 에 대한 테스트입니다.
+
+<img width="60%" class="blog-image" src="docs/images/img_13.png" />
+
