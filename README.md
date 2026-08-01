@@ -15,6 +15,52 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 - 팀원들의 정보를 저장하고 불러오는 API
 - 프로필 사진을 업로드 하는 API
 
+### API 구조
+
+| Method | URI | 설명 |
+|--------|-----|------|
+| `GET` | `/api/members/{id}` | ID로 멤버 단건 조회 |
+| `POST` | `/api/members` | 멤버 생성 |
+| `GET` | `/api/members/{id}/profile-image` | 프로필 이미지 Presigned URL 조회 |
+| `POST` | `/api/members/{id}/profile-image` | 프로필 이미지 업로드 |
+| `GET` | `/actuator/health` | 애플리케이션 헬스체크 | — |
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as Spring Boot API
+    participant DB as MySQL (RDS)
+    participant S3 as AWS S3
+
+    Note over Client,S3: 멤버 생성
+    Client->>API: POST /api/members
+    API->>DB: INSERT Member
+    DB-->>API: 저장된 Member
+    API-->>Client: ApiResponse<MemberDto>
+
+    Note over Client,S3: 멤버 조회
+    Client->>API: GET /api/members/{id}
+    API->>DB: SELECT Member
+    DB-->>API: Member 데이터
+    API-->>Client: ApiResponse<MemberDto>
+
+    Note over Client,S3: 프로필 이미지 업로드
+    Client->>API: POST /api/members/{id}/profile-image (multipart)
+    API->>S3: 이미지 파일 업로드
+    S3-->>API: 저장된 파일 Key
+    API->>DB: UPDATE profileImageKey
+    DB-->>API: 업데이트 완료
+    API-->>Client: ApiResponse<MemberProfileResponseDto>
+
+    Note over Client,S3: 프로필 이미지 조회
+    Client->>API: GET /api/members/{id}/profile-image
+    API->>DB: SELECT profileImageKey
+    DB-->>API: profileImageKey
+    API->>S3: Presigned URL 생성
+    S3-->>API: Presigned URL (7일 유효)
+    API-->>Client: ApiResponse<MemberProfileResponseDto>
+```
+
 ## Work Flow
 
 ### 1. AWS Budget 설정
