@@ -92,8 +92,10 @@ jobs:
           # Docker 빌드
           docker build --platform linux/arm64 -t $ECR_URI:$SHORT_SHA .
           
-          # ECR push
+          # push
           docker push $ECR_URI:$SHORT_SHA
+          docker push $DOCKERHUB_URI:$SHORT_SHA
           
           # 결과 출력
           echo "✅ Pushed: $ECR_URI:$SHORT_SHA"
+          echo "✅ Pushed: $DOCKERHUB_URI:$SHORT_SHA"
