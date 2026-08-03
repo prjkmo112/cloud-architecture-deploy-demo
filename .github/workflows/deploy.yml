@@ -90,7 +90,7 @@ jobs:
           DOCKERHUB_URI=${{ secrets.DOCKERHUB_USERNAME }}/cloud-architecture-deploy-demo
 
           # Docker 빌드
-          docker build --platform linux/arm64 -t $ECR_URI:$SHORT_SHA .
+          docker build --platform linux/arm64 -t $ECR_URI:$SHORT_SHA -t $DOCKERHUB_URI:$SHORT_SHA .
           
           # push
           docker push $ECR_URI:$SHORT_SHA
