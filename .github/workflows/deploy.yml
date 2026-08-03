@@ -64,6 +64,11 @@ jobs:
           name: app-jar
           path: build/libs/
 
+      - name: Metadata
+        id: meta
+        run: |
+          echo "git_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       # AWS 자격증명 - OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -73,6 +78,7 @@ jobs:
 
       # ECR 로그인
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       # Docker hub 로그인
@@ -82,20 +88,65 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 8: Docker 빌드 및 push
+      # Docker 빌드 및 push
       - name: Build and push Docker image
+        id: build_image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.meta.outputs.git_sha }}
         run: |
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}
+          ECR_URI=$ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}
           DOCKERHUB_URI=${{ secrets.DOCKERHUB_USERNAME }}/cloud-architecture-deploy-demo
 
           # Docker 빌드
-          docker build --platform linux/arm64 -t $ECR_URI:$SHORT_SHA -t $DOCKERHUB_URI:$SHORT_SHA .
+          docker build --platform linux/arm64 -t $ECR_URI:$IMAGE_TAG -t $DOCKERHUB_URI:$IMAGE_TAG .
           
           # push
-          docker push $ECR_URI:$SHORT_SHA
-          docker push $DOCKERHUB_URI:$SHORT_SHA
+          docker push $ECR_URI:$IMAGE_TAG
+          docker push $DOCKERHUB_URI:$IMAGE_TAG
           
           # 결과 출력
-          echo "✅ Pushed: $ECR_URI:$SHORT_SHA"
-          echo "✅ Pushed: $DOCKERHUB_URI:$SHORT_SHA"
+          echo "✅ Pushed: $ECR_URI:$IMAGE_TAG"
+          echo "✅ Pushed: $DOCKERHUB_URI:$IMAGE_TAG"
+
+      - name: Deploy to EC2
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.meta.outputs.git_sha }}
+        run: |
+          set -euo pipefail
+
+          ECR_URI=$ECR_REGISTRY/${{ secrets.ECR_REPOSITORY }}
+          IMAGE_URI=$ECR_URI:$IMAGE_TAG
+          
+          cat > ssm-parameters.json <<EOF
+          {
+            "commands": [
+              "set -euo pipefail",
+        
+              "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY",
+              "docker pull $IMAGE_URI",
+              "docker rm -f ${{ secrets.ECR_REPOSITORY }} 2>/dev/null || true",
+              "docker run -d --name ${{ secrets.ECR_REPOSITORY }} --restart unless-stopped -p 8080:8080 $IMAGE_URI",
+              "docker image prune -f",
+              "docker ps --filter name=${{ secrets.ECR_REPOSITORY }}"
+            ]
+          }
+          EOF
+          
+          COMMAND_ID=$(
+            aws ssm send-command \
+              --region "${{ secrets.AWS_REGION }}" \
+              --instance-ids "${{ vars.AWS_INSTANCE_ID }}" \
+              --document-name "AWS-RunShellScript" \
+              --comment "Deploy ${{ env.IMAGE_TAG }}" \
+              --parameters file://ssm-parameters.json \
+              --timeout-seconds 600 \
+              --query "Command.CommandId" \
+              --output text
+          )
+
+          echo "SSM Command ID: ${COMMAND_ID}"
+          
+          aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "${{ vars.AWS_INSTANCE_ID }}"
