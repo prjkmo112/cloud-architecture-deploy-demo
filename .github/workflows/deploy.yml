@@ -114,6 +114,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.git_sha }}
+          CONTAINER_NAME: cloud-architecture-deploy-demo
         run: |
           set -euo pipefail
 
@@ -127,10 +128,10 @@ jobs:
         
               "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY",
               "docker pull $IMAGE_URI",
-              "docker rm -f ${{ secrets.ECR_REPOSITORY }} 2>/dev/null || true",
-              "docker run -d --name ${{ secrets.ECR_REPOSITORY }} --restart unless-stopped -p 8080:8080 $IMAGE_URI",
+              "docker rm -f $CONTAINER_NAME 2>/dev/null || true",
+              "docker run -d --name $CONTAINER_NAME --restart unless-stopped -p 8080:8080 $IMAGE_URI",
               "docker image prune -f",
-              "docker ps --filter name=${{ secrets.ECR_REPOSITORY }}"
+              "docker ps --filter name=$CONTAINER_NAME"
             ]
           }
           EOF
