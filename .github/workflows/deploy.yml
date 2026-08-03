@@ -8,6 +8,11 @@ on:
       - '**/*.png'
       - '**/*.jpg'
 
+# OIDC 토큰 요청 권한
+permissions:
+  id-token: write   # OIDC 토큰 요청용
+  contents: read    # 코드 체크아웃용 (체크아웃 - Repo에 있는 코드를 Runner에 옮김)
+
 jobs:
   ci:
     runs-on: ubuntu-latest
