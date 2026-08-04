@@ -227,3 +227,88 @@ ParameterStore 읽을 수 있는 정책과 S3 접근 정책을 포함한 role �
 > 
 > ![](https://sdd-momo-s3.s3.ap-northeast-2.amazonaws.com/uploads/72ea3acc-6340-4130-9b96-f176a73ad4bd_20240208_151814.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260731T154247Z&X-Amz-SignedHeaders=host&X-Amz-Credential=AKIA37TRHJA5PAL7SPDP%2F20260731%2Fap-northeast-2%2Fs3%2Faws4_request&X-Amz-Expires=604800&X-Amz-Signature=759fc98f616d469ccd2d90ec9a9eef68face562fb1b5b9aa6e88e84944bd3467)
 
+### 8. Docker & CI/CD Pipeline 구축
+
+#### Idea
+
+![](docs/images/img_25.png)
+
+---
+
+ECR 에 업로드하기 위해 AWS 에서 OIDC 를 생성하고 ECR 관리할 수 있는 역할과 연결합니다.
+
+![](docs/images/img_17.png)
+![](docs/images/img_18.png)
+
+Github Actions 에서 사용할 값들을 Github Repo 의 Secrets 에 저장합니다.
+
+![](docs/images/img_19.png)
+
+#### 8-1. Docker 이미지 배포 결과
+
+- Github Actions
+
+    https://github.com/prjkmo112/cloud-architecture-deploy-demo/actions/runs/30775010676
+
+- ECR
+
+    ![](docs/images/img_20.png)
+
+- Docker Hub
+
+    https://hub.docker.com/r/ptjkjm1/cloud-architecture-deploy-demo/tags
+
+#### 8-2. EC2 의 자동 배포 (EC2 자동 실행)
+
+8-2-1. EC2 에 SSM Agent 설치 확인
+
+```bash
+sudo systemctl status amazon-ssm-agent
+```
+
+![](docs/images/img_21.png)
+
+만약 `amazon-ssm-agent` 가 없다면 설치를 해주어야 합니다.
+https://docs.aws.amazon.com/ko_kr/systems-manager/latest/userguide/manually-install-ssm-agent-linux.html
+
+8-2-2. SSM (Systems Manager) 설정
+
+`SSM > Fleet Manager > 관리형 노드`에 접속하면 자동으로 Fleet Manager 가 
+SSM 사용이 가능한 EC2 인스턴스를 보여줍니다.
+
+> ⚠️ Fleet Manager 처음 세팅하면, 가능한 EC2 인스턴스 리스트를 가져오는데 오래 걸릴 수 있습니다. (대략 5분 정도)
+
+![](docs/images/img_22.png)
+
+8-2-3. EC2 에 Docker 설치
+
+```bash
+set -euxo pipefail
+
+dnf install -y docker
+
+systemctl enable --now docker
+
+docker --version
+docker ps
+```
+
+> ⚠️ **SSM Fleet Manager 의 명령 실행 주체**
+> 
+> 위 내용은 SSM 의 명령어 실행 기능을 사용한 기준입니다. Fleet Manager 의 명령 실행 주체는 `root` 입니다.
+> 따라서 직접 SSH 를 통해 접속한 경우에는 sudo 를 붙여야 합니다.
+
+8-2-4. Github Action 을 통한 배포 실행
+
+- Github Actions
+
+  https://github.com/prjkmo112/cloud-architecture-deploy-demo/actions/runs/30863014250/job/91848999929
+
+- SSM Fleet Manager 의 명령 기록
+
+  ![](docs/images/img_24.png)
+
+- EC2 에서 Docker 컨테이너 실행 확인
+
+  ![](docs/images/img_23.png)
+
