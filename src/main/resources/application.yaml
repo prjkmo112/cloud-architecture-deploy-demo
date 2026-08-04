@@ -31,3 +31,4 @@ info:
   app:
     name: sparta-deploy-demo
     version: 1.0.0
+    memo: 1
