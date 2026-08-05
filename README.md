@@ -312,3 +312,145 @@ docker ps
 
   ![](docs/images/img_23.png)
 
+### 9. 고가용성 아키텍처와 보안 도메인 연결 (ALB + ASG + HTTPS)
+
+#### 9-1. 대상 그룹 (Target Group) 생성
+
+- 대상 유형 : 인스턴스
+- 상태 검사 : HTTP, /actuator/health, 200 OK (Spring Actuator)
+
+#### 9-2. ALB 생성
+![](docs/images/img_26.png)
+
+#### 9-3. ASG 생성
+
+ASG 에서 사용할 EC2 의 템플릿을 먼저 만들어 주어야 합니다.
+
+이때 주의할 점은 EC2 의 시작 템플릿을 만들어 줄 때 시작할 때 
+필요한 명령어를 user data 에 넣어주어야 합니다. Docker 를 사용하므로 **docker 설치**, 이미지를 다운로드 받기 위해 **ECR 로그인**,
+이미 작동중인 **컨테이너가 있다면 종료 후 재실행**하는 사전작업들이 필요합니다. 
+
+```bash
+#!/bin/bash
+set -e
+
+# ── 변수 설정 ──
+AWS_REGION="***"
+AWS_ACCOUNT_ID="***"
+ECR_REPOSITORY="***"
+CONTAINER_NAME="***"
+IMAGE_TAG="***"
+
+ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+
+# ── Docker 설치 ──
+dnf update -y
+dnf install -y docker
+systemctl enable docker
+systemctl start docker
+
+# ── ECR 로그인 ──
+aws ecr get-login-password --region ${AWS_REGION} | \
+  docker login --username AWS --password-stdin \
+  ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
+# ── 컨테이너 실행 ──
+docker pull ${ECR_URI}:${IMAGE_TAG}
+
+# 혹시 같은 이름의 컨테이너가 있으면 제거
+docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+
+docker run -d -p 8080:8080 \
+  --restart unless-stopped \
+  --name ${CONTAINER_NAME} \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  ${ECR_URI}:${IMAGE_TAG}
+```
+
+이제 이 템플릿을 이용한 ALB 를 만들어주면 됩니다.
+
+- Public Subnet 에 위치
+- 새 보안 그룹 생성 (HTTP, HTTPS 규칙)
+- 대상 그룹 : 위에서 만든 대상 그룹
+
+여기까지 완료한 후 `Auto scaling group > 인스턴스 관리 탭` 또는 `대상 그룹 > 등록된 대상`에 들어가면 작동중인 인스턴스를 확인할 수 있습니다.
+상태가 Healthy 라고 되어있으면 정상적으로 작동중인 것입니다.
+
+![](docs/images/img_28.png)
+
+이제 API 가 정상적으로 작동하는지 확인하기 위해 actuator 로 접속해보면 됩니다.
+Route 53 연결하기 전이라면 ALB 의 DNS 가 URL 이 됩니다. 
+
+![](docs/images/img_27.png)
+
+#### 9-4. 도메인 등록 및 연결
+
+9-4-1. 도메인 등록
+
+Route 53 에 들어가 도메인 구입 후 ACM 에서 인증서를 발급받습니다.
+
+> ACM 등록할 때 도메인을 "spartamo.click", "*.spartamo.click" 두 개를 등록합니다.
+
+등록된 ACM 인증서 세부 정보에서 `도메인 > Route 53 에서 레코드 생성 > 도메인 전체 클릭 > 레코드 생성` 을 진행합니다.
+도메인 상태가 `성공` 으로 변경될 때까지 기다려야 합니다. 
+
+> ⚠️ 도메인 상태가 `성공`으로 변경되는 데 약 30분 정도 소요될 수 있습니다. 
+
+9-4-2. Load Balancer 리스너 수정
+
+Load Balancer 의 리스너를 아래처럼 변경해주었습니다.
+
+- HTTP
+  - HTTPS 리다이렉트 (Port: 443, Status: 301)
+- HTTPS
+  - 대상 그룹으로 전달
+  - SSL 인증서 -> ACM & 위에서 만든 인증서
+
+9-4-3. Route 53 레코드 연결
+
+- 레코드 유형: A
+- 엔드포인트 : Application/Classic Load Balancer 에 대한 별칭
+- 위에서 만든 로드밸런서 선택
+
+---
+
+- 최종 ALB 리소스 맵
+
+![](docs/images/img_29.png)
+
+- 도메인 URL
+
+https://spartamo.click
+
+`GET` https://spartamo.click/actuator/health
+
+`GET` https://spartamo.click/actuator/info
+
+`GET` https://spartamo.click/api/members/:id
+
+`POST` https://spartamo.click/api/members
+```
+{
+  "name": "tester1",
+  "age": 22,
+  "mbti": "INTP"
+}
+```
+
+`GET` https://spartamo.click/api/members/:id/profile-image
+
+`POST` https://spartamo.click/api/members/:id/profile-image
+```
+{
+  "file": "<file>"
+}
+```
+
+- 접속 결과
+
+![](docs/images/img_30.png)
+
+![](docs/images/img_31.png)
+
+---
+
