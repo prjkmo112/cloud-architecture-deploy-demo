@@ -47,7 +47,7 @@ AWS 상에서 안전하게 중단 없이 운영하기 위한 데모 목적의 �
 ![Amazon EC2](./docs/badges/amazon-ec2.svg)
 ![Amazon ECR](./docs/badges/amazon-ecr.svg)
 ![Application Load Balancer](./docs/badges/application-load-balancer.svg)
-![EC2 Auto Scaling](./docs/badges/ec2-auto-scaling.svg)정
+![EC2 Auto Scaling](./docs/badges/ec2-auto-scaling.svg)
 ![Amazon RDS](./docs/badges/amazon-rds.svg)
 ![Amazon Route 53](./docs/badges/amazon-route-53.svg)
 ![AWS Certificate Manager](./docs/badges/aws-certificate-manager.svg)
